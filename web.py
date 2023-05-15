@@ -26,7 +26,7 @@ def html_page(title,target,html_content,gw,footer_html=None):
 	fout.write('<header class="w3-container w3-center w3-padding-48" style="background-color:#22235F">\n')
 
 	workmark_url = 'https://github.com/mwinokan/SolentFitness/blob/main/assets/SOLENT_Wordmark_White.png?raw=true'
-	fout.write(f'<img class="w3-image" src="{workmark_url}" alt="SOLENT" width="90%" max-width="400px"> ')
+	fout.write(f'<img class="w3-image" src="{workmark_url}" alt="SOLENT" style="width:70%;max-width:400px"> ')
 
 	# fout.write('<h1 class="w3-xxxlarge"><b>FPL <span class="w3-tag">GUI</span></b></h1>\n')
 	# fout.write('<h6>Max Winokan</h6>\n')
