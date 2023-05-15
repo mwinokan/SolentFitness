@@ -156,6 +156,14 @@ def result_table(gw,data):
 
 	return html_buffer
 
+def push_changes():
+
+	import os
+	os.system("git add *py")
+	os.system("git add *html")
+	os.system("git commit -m 'auto-push'")
+	os.system("git push")
+
 def main():
 
 	html_buffer = ''
@@ -180,6 +188,8 @@ def main():
 		html_buffer += result_table(gw, data)
 
 	html_page('Solent Fitness','index.html', html_buffer, active_gw)
+
+	push_changes()
 
 if __name__ == '__main__':
 	main()
