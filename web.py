@@ -13,6 +13,7 @@ def html_page(title,target,html_content,gw,footer_html=None):
 	fout.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Oswald">\n')
 	fout.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open Sans">\n')
 	fout.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">\n')
+	fout.write('<link rel="icon" type="image/x-icon" href="/assets/SOLENT_Logo_Navy.png">\n')
 	fout.write('<style>\n')
 	fout.write('h1,h2,h3,h4,h5,h6 {font-family: "Oswald"}')
 	fout.write('body {font-family: "Open Sans"}\n')
