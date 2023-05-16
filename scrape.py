@@ -112,7 +112,12 @@ def result_table(gw,data):
 		html_buffer += '<tr>\n'
 
 		html_buffer += '<td>\n'
-		html_buffer += f'{i+1}\n'
+
+		if i == 0:
+			html_buffer += '🏆\n'
+		else:
+			html_buffer += f'{i+1}\n'
+
 		html_buffer += '</td>\n'
 
 		html_buffer += '<td>\n'
