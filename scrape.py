@@ -17,6 +17,7 @@ lookup = {
 		},
 		"complete": {
 			3: False,
+			7: False,
 		}
 	}
 }
