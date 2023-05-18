@@ -2,7 +2,7 @@
 
 offline = False
 
-active_gw = 1
+active_gw = 2
 
 lookup = {
 	1: {
@@ -19,6 +19,14 @@ lookup = {
 			3: False,
 			7: False,
 		}
+	},
+	2: {
+		"name": "UTS Week 2 (Responses)",
+		"datacol": "What was your total time?",
+		"datatype": "time",
+		"datalabel": "Time",
+		"reversed": False,
+		"complete": {}
 	}
 }
 
