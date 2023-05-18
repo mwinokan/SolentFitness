@@ -26,7 +26,8 @@ lookup = {
 		"datatype": "time",
 		"datalabel": "Time",
 		"reversed": False,
-		"complete": {}
+		"complete": {},
+		"skip": [2]
 	}
 }
 
@@ -72,12 +73,13 @@ def get_sheet_records(name,gw):
 			if i in lookup[gw]["namefix"]:
 				name = lookup[gw]["namefix"][i]
 
+		if "skip" in lookup[gw]:
+			if i in lookup[gw]["skip"]:
+				continue
+
 		complete = True
 		if i in lookup[gw]['complete']:
 			complete = lookup[gw]['complete'][i]
-
-		# if row[note]:
-		# 	print(name,row[note])
 
 		entries.append(dict(name=name,data=data,index=i,note=row[note],complete=complete))
 
