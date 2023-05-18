@@ -182,30 +182,87 @@ def push_changes():
 
 def main():
 
-	html_buffer = ''
-	
-	html_buffer += f'<h1 class="w3-center">Fitness Challenge Results</h1>\n'
+	# launchd_plist()
 
-	for gw in range(active_gw,0,-1):
+	# exit()
 
-		mout.headerOut(f'Gameweek {gw}')
-		html_buffer += f'<h2>Week {gw}</h2>\n'
+	try:
 
-		# get the data
-		if not offline and gw == active_gw:
-			data = get_sheet_records(lookup[gw]['name'],gw)
-		else:
-			mout.out(f'Reading {mcol.file}week{gw}.json{mcol.clear}...')
-			data = json.load(open(f'week{gw}.json','rt'))
+		html_buffer = ''
+		
+		html_buffer += f'<h1 class="w3-center">Fitness Challenge Results</h1>\n'
 
-		for d in sorted(data,key=lambda x: x['data'],reverse=lookup[gw]['reversed']):
-			print(d['name'],d['data'],d['index'],d['note'])
+		for gw in range(active_gw,0,-1):
 
-		html_buffer += result_table(gw, data)
+			mout.headerOut(f'Gameweek {gw}')
+			html_buffer += f'<h2>Week {gw}</h2>\n'
 
-	html_page('Solent Fitness','index.html', html_buffer, active_gw)
+			# get the data
+			if not offline and gw == active_gw:
+				data = get_sheet_records(lookup[gw]['name'],gw)
+			else:
+				mout.out(f'Reading {mcol.file}week{gw}.json{mcol.clear}...')
+				data = json.load(open(f'week{gw}.json','rt'))
 
-	push_changes()
+			for d in sorted(data,key=lambda x: x['data'],reverse=lookup[gw]['reversed']):
+				print(d['name'],d['data'],d['index'],d['note'])
+
+			html_buffer += result_table(gw, data)
+
+		html_page('Solent Fitness','index.html', html_buffer, active_gw)
+
+		push_changes()
+		
+		os.system("terminal-notifier -title 'UTS' -message 'Completed page update'")
+
+	except Exception as e:
+
+		os.system(f"terminal-notifier -title 'UTS' -message 'Failed page update ({e})'")
+
+def launchd_plist(interval=14400):
+
+	f = open("/Users/mw00368/Library/LaunchAgents/com.mwinokan.uts.plist",'w')
+
+	str_buffer = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>Label</key>
+		<string>com.mwinokan.uts</string>
+		<key>Program</key>
+		<string>/Users/mw00368/Box Sync/Python/SolentFitness/scrape.py</string>
+		<key>EnvironmentVariables</key>
+		<dict>
+			<key>PATH</key>
+			<string>/Users/mw00368/miniconda3/bin:/Users/mw00368/miniconda3/condabin:/Library/TeX/texbin:/Users/mw00368/miniconda3/bin:/Users/mw00368/sh:/Users/mw00368/asap/x86_64:/Users/mw00368/Movies/autodownload:/Users/mw00368/Dropbox/MCal:/Users/mw00368/.local/bin:/Users/mw00368/usr/bin:/Users/mw00368/bin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/TeX/texbin:/usr/local/munki:/opt/X11/bin:/Library/Apple/usr/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Users/mw00368/sh:/Users/mw00368/gromax:/Users/mw00368/AseMolPlot</string>
+			<key>PYTHONPATH</key>
+			<string>/Users/mw00368/tars_n_zips/PyRosetta4.Release.python39.mac.release-321:/Users/mw00368/pypackages/gpxpy-1.4.2:/Users/mw00368/pypackages/gpxpy-1.4.2:/Users/mw00368/asap/Python:/Users/mw00368/asap/x86_64:/Users/mw00368/.local/lib/python3.7/site-packages:/Users/mw00368/miniconda3/lib/python3.8/site-packages/::/Users/mw00368/py/:/Users/mw00368/AseMolPlot</string>
+		</dict>
+		<key>StandardInPath</key>
+		<string>/Users/mw00368/Box Sync/Python/SolentFitness/daemon.stdin</string>
+		<key>StandardOutPath</key>
+		<string>/Users/mw00368/Box Sync/Python/SolentFitness/daemon.stdout</string>
+		<key>StandardErrorPath</key>
+		<string>/Users/mw00368/Box Sync/Python/SolentFitness/daemon.stderr</string>
+		<key>WorkingDirectory</key>
+		<string>/Users/mw00368/Box Sync/Python/SolentFitness</string>
+		<key>StartInterval</key>"""
+	str_buffer += f"        <integer>{interval}</integer>"
+	str_buffer += """    </dict>
+</plist>"""
+		
+	f.write(str_buffer)
+	f.close()
+
+	import os
+	os.system("launchctl unload ~/Library/LaunchAgents/com.mwinokan.uts.plist")
+	os.system("launchctl load ~/Library/LaunchAgents/com.mwinokan.uts.plist")
+
+	print("/Users/mw00368/Library/LaunchAgents/com.mwinokan.uts.plist")
+	print("start with:")
+	print("launchctl start com.mwinokan.uts")
+	print("see details with:")
+	print("launchctl print gui/$UID/com.mwinokan.uts")
 
 if __name__ == '__main__':
 	main()
