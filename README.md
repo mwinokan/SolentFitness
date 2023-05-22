@@ -1,3 +1,3 @@
 # SolentFitness
 
-[website](mwinokan.github.io/SolentFitness)
+[website](https://mwinokan.github.io/SolentFitness)
