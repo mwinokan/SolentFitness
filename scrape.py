@@ -2,7 +2,7 @@
 
 offline = False
 
-active_gw = 2
+active_gw = 3
 
 lookup = {
 	1: {
@@ -28,6 +28,15 @@ lookup = {
 		"reversed": False,
 		"complete": {},
 		"skip": [2]
+	},
+	3: {
+		"name": "UTS Week 3 (Responses)",
+		"datacol": "What was your total time?",
+		"datatype": "time",
+		"datalabel": "Time",
+		"reversed": False,
+		"complete": {},
+		# "skip": [2]
 	}
 }
 
@@ -56,6 +65,9 @@ def get_sheet_records(name,gw):
 	sheet_instance = sheet.get_worksheet(0)
 	records_data = sheet_instance.get_all_records(expected_headers=None)
 	records_df = pd.DataFrame.from_dict(records_data)
+
+	if not len(records_df):
+		mout.error("empty dataframe")
 
 	print(records_df.columns)
 
