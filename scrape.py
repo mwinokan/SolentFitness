@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 
 offline = False
+run_push_changes = True
+force_pull = False
 
 active_gw = 3
 
 lookup = {
 	1: {
 		"name": "UTS Week 1 (Responses)",
+		"label": "10x (10x press-ups, 10x squats, 10x lunges, 10x sit ups, 10x burpees)",
 		"datacol": "What was your total time?",
 		"datatype": "time",
 		"datalabel": "Time",
 		"reversed": False,
 		"namefix": {
 			0: 'Manch',
-			1: 'James Cushen'
+			1: 'James Cushen',
+			3: 'Tom Allan',
 		},
 		"complete": {
 			3: False,
@@ -22,6 +26,7 @@ lookup = {
 	},
 	2: {
 		"name": "UTS Week 2 (Responses)",
+		"label": "5km run",
 		"datacol": "What was your total time?",
 		"datatype": "time",
 		"datalabel": "Time",
@@ -31,6 +36,7 @@ lookup = {
 	},
 	3: {
 		"name": "UTS Week 3 (Responses)",
+		"label": "1 mile run, 50/50/50 squats/press-ups/sit-ups, 1 mile run",
 		"datacol": "What was your total time?",
 		"datatype": "time",
 		"datalabel": "Time",
@@ -78,7 +84,7 @@ def get_sheet_records(name,gw):
 
 	for i,row in records_df.iterrows():
 
-		name = row['Name']
+		name = row['Name'].strip()
 		data = row[datacol]
 
 		if "namefix" in lookup[gw]:
@@ -100,9 +106,21 @@ def get_sheet_records(name,gw):
 
 	return entries
 
+def calculate_gw_points(position,complete):
+
+	points = 1
+
+	if complete:
+		points += 1
+
+	if position < 11:
+		points += 11 - position
+
+	return points
+
 def result_table(gw,data):
 
-	html_buffer = ''
+	html_buffer = f'<p><b>{lookup[gw]["label"]}</b></p>'
 
 	html_buffer += '<table class="w3-table-all">\n'
 	
@@ -119,6 +137,10 @@ def result_table(gw,data):
 
 	html_buffer += '<th>\n'
 	html_buffer += f'{lookup[gw]["datalabel"]}\n'
+	html_buffer += '</th>\n'
+
+	html_buffer += '<th>\n'
+	html_buffer += 'Pts\n'
 	html_buffer += '</th>\n'
 
 	html_buffer += '<th>\n'
@@ -150,11 +172,19 @@ def result_table(gw,data):
 		html_buffer += f"{d['data']}\n"
 		html_buffer += '</td>\n'
 
+		d['points'] = calculate_gw_points(i+1, True)
+		d['position'] = i+1
+
+		html_buffer += '<td>\n'
+		html_buffer += f"{d['points']}\n"
+		html_buffer += '</td>\n'
+
 		html_buffer += '<td>\n'
 		html_buffer += f"{d['note']}\n"
 		html_buffer += '</td>\n'
 
 		html_buffer += '</tr>\n'
+
 
 	# partial
 	partial = [d for d in data if not d['complete']]
@@ -172,6 +202,13 @@ def result_table(gw,data):
 
 		html_buffer += '<td>\n'
 		html_buffer += f"{d['data']}\n"
+		html_buffer += '</td>\n'
+
+		d['points'] = calculate_gw_points(i+j+1, True)
+		d['position'] = i+j+1
+
+		html_buffer += '<td>\n'
+		html_buffer += f"{d['points']}\n"
 		html_buffer += '</td>\n'
 
 		html_buffer += '<td>\n'
@@ -197,22 +234,22 @@ def main():
 	import os
 
 	# launchd_plist()
-
 	# exit()
 
 	try:
 
-		html_buffer = ''
+		result_buffer = ''
 		
-		html_buffer += f'<h1 class="w3-center">Fitness Challenge Results</h1>\n'
+
+		all_data = {}
 
 		for gw in range(active_gw,0,-1):
 
 			mout.headerOut(f'Gameweek {gw}')
-			html_buffer += f'<h2>Week {gw}</h2>\n'
+			result_buffer += f'<h3>Week {gw}</h2>\n'
 
 			# get the data
-			if not offline and gw == active_gw:
+			if force_pull or not offline and gw == active_gw:
 				data = get_sheet_records(lookup[gw]['name'],gw)
 			else:
 				mout.out(f'Reading {mcol.file}week{gw}.json{mcol.clear}...')
@@ -221,17 +258,120 @@ def main():
 			for d in sorted(data,key=lambda x: x['data'],reverse=lookup[gw]['reversed']):
 				print(d['name'],d['data'],d['index'],d['note'])
 
-			html_buffer += result_table(gw, data)
+			all_data[gw] = data
+
+			result_buffer += result_table(gw, data)
+
+		html_buffer = f'<h1 class="w3-center">Fitness Challenge</h1>\n'
+
+		html_buffer += '<p>Points are awarded per week for:</p>\n'
+		html_buffer += '<ul>\n'
+		html_buffer += '<li><b>1 point</b> for participation</li>\n'
+		html_buffer += '<li><b>1 point</b> for a completed challenge</li>\n'
+		html_buffer += '<li><b>1-10 points</b> for the top 10 best entries</li>\n'
+		html_buffer += '</ul>\n'
+		
+		html_buffer += f'<h2>Leaderboard</h2>\n'
+		html_buffer += leaderboard(all_data)
+
+		html_buffer += f'<h2>Weekly Entries</h2>\n'
+		html_buffer += result_buffer
 
 		html_page('Solent Fitness','index.html', html_buffer, active_gw)
 
-		push_changes()
+		if run_push_changes:
+			push_changes()
 		
 		os.system("terminal-notifier -title 'UTS' -message 'Completed page update'")
 
 	except Exception as e:
 
+		mout.error(e)
 		os.system(f"terminal-notifier -title 'UTS' -message 'Failed page update ({e})'")
+
+def get_unique_names(all_data):
+	names = []
+	for gw in all_data:
+		for d in all_data[gw]:
+			names.append(d['name'])
+	return list(set(names))
+
+def get_player_score(name,all_data):
+	score = 0
+	for gw in all_data:
+		for d in all_data[gw]:
+
+			if d['name'] == name:
+				score += d['points']
+				break
+	return score
+
+def leaderboard(all_data):
+
+	mout.header('Leaderboard')
+
+	# print(all_data[3][0]['name'])
+
+	unique_names = get_unique_names(all_data)
+
+	leader_data = []
+	for name in unique_names:
+		score = get_player_score(name, all_data)
+		leader_data.append(dict(name=name,score=score))
+
+	print(unique_names)
+
+	html_buffer = '<table class="w3-table-all">\n'
+	
+	# header
+	html_buffer += '<tr>\n'
+
+	html_buffer += '<th class="w3-center">\n'
+	html_buffer += 'Rank\n'
+	html_buffer += '</th>\n'
+
+	html_buffer += '<th class="w3-center">\n'
+	html_buffer += 'Score\n'
+	html_buffer += '</th>\n'
+
+	html_buffer += '<th>\n'
+	html_buffer += 'Name\n'
+	html_buffer += '</th>\n'
+
+	html_buffer += '</tr>\n'
+
+	for i,d in enumerate(sorted(leader_data,key=lambda x: x['score'],reverse=True)):
+
+		html_buffer += '<tr>\n'
+
+		html_buffer += '<td class="w3-center">\n'
+
+		if i == 0:
+			html_buffer += '🥇\n'
+		elif i == 1:
+			html_buffer += '🥈\n'
+		elif i == 2:
+			html_buffer += '🥉\n'
+		else:
+			html_buffer += f'{i+1}\n'
+
+		html_buffer += '</td>\n'
+
+		html_buffer += '<td class="w3-center">\n'
+		html_buffer += f"{d['score']}\n"
+		html_buffer += '</td>\n'
+
+		html_buffer += '<td>\n'
+		html_buffer += f"{d['name']}\n"
+		html_buffer += '</td>\n'
+
+		html_buffer += '</tr>\n'
+
+		print(d['name'],d['score'])
+	
+	html_buffer += '</table>\n'
+
+	return html_buffer
 
 def launchd_plist(interval=14400):
 
