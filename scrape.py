@@ -204,7 +204,7 @@ def result_table(gw,data):
 		html_buffer += f"{d['data']}\n"
 		html_buffer += '</td>\n'
 
-		d['points'] = calculate_gw_points(i+j+1, True)
+		d['points'] = calculate_gw_points(i+j+1, False)
 		d['position'] = i+j+1
 
 		html_buffer += '<td>\n'
